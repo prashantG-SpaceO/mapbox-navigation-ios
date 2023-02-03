@@ -1,0 +1,14 @@
+ignore:
+  - "Example"
+  - "MapboxNavigationTests"
+  - "MapboxCoreNavigationTests"
+  - "MapboxCoreNavigationIntegrationTests"
+  - "TestHelper"
+
+coverage:
+  status:
+    project:
+      default:
+        threshold: 1%
+    patch: false
+  
