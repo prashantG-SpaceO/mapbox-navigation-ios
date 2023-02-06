@@ -191,9 +191,8 @@ final class BillingHandler {
     /// The billing service which is used to send billing events.
     private let billingService: BillingService
 
-    private let navigatorType: CoreNavigator.Type
-    private var navigator: CoreNavigator {
-        return navigatorType.shared
+    private var navigator: Navigator {
+        .shared
     }
 
     /**
@@ -253,10 +252,8 @@ final class BillingHandler {
         billingService.accessToken
     }
 
-    private init(service: BillingService,
-                 navigatorType: CoreNavigator.Type = Navigator.self) {
+    private init(service: BillingService) {
         self.billingService = service
-        self.navigatorType = navigatorType
     }
 
     /**
@@ -458,7 +455,7 @@ final class BillingHandler {
         let hasRunningSession = _sessions.values.contains { !$0.isPaused }
         lock.unlock()
 
-        if navigatorType.isSharedInstanceCreated {
+        if Navigator.isSharedInstanceCreated {
             if hasRunningSession {
                 navigator.resume()
             }
@@ -472,9 +469,8 @@ final class BillingHandler {
 // MARK: - Tests Support
 
 extension BillingHandler {
-    static func __createMockedHandler(with service: BillingService,
-                                      navigatorType: CoreNavigator.Type = Navigator.self) -> BillingHandler {
-        BillingHandler(service: service, navigatorType: navigatorType)
+    static func __createMockedHandler(with service: BillingService) -> BillingHandler {
+        BillingHandler(service: service)
     }
 
     static func __replaceSharedInstance(with handler: BillingHandler) {

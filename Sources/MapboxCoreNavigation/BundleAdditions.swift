@@ -113,10 +113,12 @@ extension Bundle {
      Returns the value associated with the specific key in the Mapbox Navigation bundle's information property list, if installed.
      */
     public class func string(forMapboxNavigationInfoDictionaryKey key: String) -> String? {
-        if let infoDictionary = Bundle.mapboxNavigationInfoDictionary {
+        if let stringForKey = Bundle.mapboxNavigationIfInstalled?.object(forInfoDictionaryKey: key) {
+            return stringForKey as? String
+        } else if let infoDictionary = Bundle.mapboxNavigationInfoDictionary {
             return infoDictionary[key] as? String
         } else {
-            return Bundle.mapboxNavigationIfInstalled?.object(forInfoDictionaryKey: key) as? String
+            return nil
         }
     }
     
@@ -124,10 +126,12 @@ extension Bundle {
      Returns the value associated with the specific key in the Mapbox Core Navigation bundle's information property list.
      */
     public class func string(forMapboxCoreNavigationInfoDictionaryKey key: String) -> String? {
-        if let infoDictionary = Bundle.mapboxCoreNavigationInfoDictionary {
+        if let stringForKey = Bundle.mapboxCoreNavigation.object(forInfoDictionaryKey: key) {
+            return stringForKey as? String
+        } else if let infoDictionary = Bundle.mapboxCoreNavigationInfoDictionary {
             return infoDictionary[key] as? String
         } else {
-            return Bundle.mapboxCoreNavigation.object(forInfoDictionaryKey: key) as? String
+            return nil
         }
     }
 }

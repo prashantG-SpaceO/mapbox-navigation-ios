@@ -1,2 +1,0 @@
-import MapboxDirections
-import MapboxNavigationNative

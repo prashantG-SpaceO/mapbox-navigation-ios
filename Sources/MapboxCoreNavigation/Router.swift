@@ -40,49 +40,6 @@ public struct IndexedRouteResponse {
     }
     
     /**
-     Parses routes in the current response, accounting `routeIndex` to be pointing to the primary route, while all the others being `AlternativeRoute`s.
-     
-     - returns: Array of `AlternativeRoutes` containing relative information to `currentRoute`.
-     */
-    public func parseAlternativeRoutes() -> [AlternativeRoute] {
-        guard let mainRoute = currentRoute,
-              let routesData = routesData(routeParserType: RouteParser.self) else {
-            return []
-        }
-        
-        let alternatives = routesData.alternativeRoutes().compactMap {
-            AlternativeRoute(mainRoute: mainRoute,
-                             alternativeRoute: $0)
-        }
-        return alternatives
-    }
-    
-    func routesData(routeParserType: RouteParser.Type) -> RoutesData? {
-        let routeOptions = validatedRouteOptions
-        
-        let encoder = JSONEncoder()
-        encoder.userInfo[.options] = routeOptions
-        guard let routeData = try? encoder.encode(routeResponse),
-              let routeJSONString = String(data: routeData, encoding: .utf8) else {
-                  return nil
-        }
-        
-        let routeRequest = Directions(credentials: routeResponse.credentials)
-            .url(forCalculating: routeOptions).absoluteString
-        
-        let parsedRoutes = routeParserType.parseDirectionsResponse(forResponse: routeJSONString,
-                                                                   request: routeRequest,
-                                                                   routeOrigin: responseOrigin)
-        if parsedRoutes.isValue(),
-           var routes = parsedRoutes.value as? [RouteInterface],
-           routes.indices.contains(routeIndex) {
-            return routeParserType.createRoutesData(forPrimaryRoute: routes.remove(at: routeIndex),
-                                                    alternativeRoutes: routes)
-        }
-        return nil
-    }
-    
-    /**
      Initializes a new `IndexedRouteResponse` object.
      
      - parameter routeResponse: `RouteResponse` object, containing routes and other related info.
@@ -355,8 +312,6 @@ extension InternalRouter where Self: Router {
             return
         }
         isRefreshing = true
-        let routeIndex = indexedRouteResponse.routeIndex
-        let routeOrigin = indexedRouteResponse.responseOrigin
         resolvedRoutingProvider.refreshRoute(indexedRouteResponse: indexedRouteResponse,
                                              fromLegAtIndex: UInt32(legIndex),
                                              currentRouteShapeIndex: routeShapeIndex,
@@ -370,20 +325,14 @@ extension InternalRouter where Self: Router {
             guard case let .success(response) = result, let self = self else {
                 return
             }
-            guard response.identifier == self.indexedRouteResponse.routeResponse.identifier else {
-                return
-            }
-            self.indexedRouteResponse = .init(routeResponse: response,
-                                              routeIndex: routeIndex,
-                                              responseOrigin: routeOrigin)
+            self.indexedRouteResponse = .init(routeResponse: response, routeIndex: self.indexedRouteResponse.routeIndex)
             
             guard let currentRoute = self.indexedRouteResponse.currentRoute else {
                 assertionFailure("Refreshed `RouteResponse` did not contain required `routeIndex`!")
                 return
             }
             
-            self.routeProgress.refreshRoute(with: currentRoute,
-                                            at: self.location ?? location,
+            self.routeProgress.refreshRoute(with: currentRoute, at: self.location ?? location,
                                             legIndex: legIndex,
                                             legShapeIndex: legShapeIndex)
             
@@ -446,31 +395,16 @@ extension InternalRouter where Self: Router {
             guard routeIsFaster else {
                 self.isRerouting = false; return
             }
-            
-            let completion = { [weak self] in
-                guard let self = self else { return }
-                var routeOptions: RouteOptions?
-                if case let .route(options) = response.options {
-                    routeOptions = options
-                }
-
-                onMainAsync {
-                    // Prefer the most optimal route (the first one) over the route that matched the original choice.
-                    self.updateRoute(with: indexedResponse,
-                                     routeOptions: routeOptions ?? self.routeProgress.routeOptions,
-                                     isProactive: true) { [weak self] success in
-                        self?.isRerouting = false
-                    }
-                }
+            var routeOptions: RouteOptions?
+            if case let .route(options) = response.options {
+                routeOptions = options
             }
-            
-            if let delegate = self.delegate {
-                delegate.router(self,
-                                shouldProactivelyRerouteFrom: location,
-                                to: route,
-                                completion: completion)
-            } else if RouteController.DefaultBehavior.shouldProactivelyRerouteFromLocation {
-                completion()
+
+            // Prefer the most optimal route (the first one) over the route that matched the original choice.
+            self.updateRoute(with: indexedResponse,
+                             routeOptions: routeOptions ?? self.routeProgress.routeOptions,
+                             isProactive: true) { [weak self] success in
+                self?.isRerouting = false
             }
         }
     }

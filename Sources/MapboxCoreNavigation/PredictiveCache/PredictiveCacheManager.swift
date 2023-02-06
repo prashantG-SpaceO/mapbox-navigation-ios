@@ -15,6 +15,7 @@ public class PredictiveCacheManager {
     @available(*, deprecated, message: "Specify `CacheMapOptions` instead.")
     public typealias MapOptions = (tileStore: TileStore, styleSourcePaths: [String])
 
+    private let navigatorProvider: NativeNavigatorProvider.Type
     private let predictiveCacheOptions: PredictiveCacheOptions
     private var cacheMapOptions: CacheMapOptions?
 
@@ -25,9 +26,8 @@ public class PredictiveCacheManager {
     private var navigationController: PredictiveCacheController? = nil
     private var mapController: PredictiveCacheController? = nil
 
-    private let navigatorType: CoreNavigator.Type
     private var navigator: MapboxNavigationNative.Navigator {
-        return navigatorType.shared.navigator
+        return navigatorProvider.navigator
     }
 
     /**
@@ -43,7 +43,7 @@ public class PredictiveCacheManager {
                             cacheMapOptions: CacheMapOptions? = nil) {
         self.init(predictiveCacheOptions: predictiveCacheOptions,
                   cacheMapOptions: cacheMapOptions,
-                  navigatorType: Navigator.self)
+                  navigatorProvider: Navigator.self)
     }
 
     /**
@@ -83,17 +83,17 @@ public class PredictiveCacheManager {
         self.init(predictiveCacheOptions:predictiveCacheOptions,
                   cacheMapOptions: cacheMapOptions,
                   styleSourcePaths: mapOptions?.styleSourcePaths ?? [],
-                  navigatorType: Navigator.self)
+                  navigatorProvider: Navigator.self)
     }
 
     init(predictiveCacheOptions: PredictiveCacheOptions,
          cacheMapOptions: CacheMapOptions?,
          styleSourcePaths: [String] = [],
-         navigatorType: CoreNavigator.Type) {
+         navigatorProvider: NativeNavigatorProvider.Type) {
         self.predictiveCacheOptions = predictiveCacheOptions
         self.cacheMapOptions = cacheMapOptions
         self.styleSourcePaths = styleSourcePaths
-        self.navigatorType = navigatorType
+        self.navigatorProvider = navigatorProvider
 
         updateControllers()
         subscribeNotifications()

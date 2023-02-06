@@ -209,7 +209,7 @@ public class MapboxRoutingProvider: RoutingProvider {
         let directionsUri = settings.directions.url(forCalculating: options).removingSKU().absoluteString
         var requestId: RequestId!
         
-        requestId = router.getRouteForDirectionsUri(directionsUri, options: GetRouteOptions(timeoutSeconds: nil)) { [weak self] (result, origin) in
+        requestId = router.getRouteForDirectionsUri(directionsUri) { [weak self] (result, origin) in
             guard let self = self else { return }
             
             self.parseResponse(requestId: requestId,
@@ -371,7 +371,7 @@ public class MapboxRoutingProvider: RoutingProvider {
                                                  currentRouteGeometryIndex: currentRouteShapeIndex.map { NSNumber(value: $0) },
                                                  additionalParams: [:])
 
-        requestId = router.getRouteRefresh(for: refreshOptions, callback: { [weak self] result, _, _ in
+        requestId = router.getRouteRefresh(for: refreshOptions, callback: { [weak self] result, _ in
             guard let self = self else { return }
             
             self.parseResponse(requestId: requestId,
